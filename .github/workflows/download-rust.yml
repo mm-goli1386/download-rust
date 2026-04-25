@@ -1,18 +1,33 @@
-name: Download Rust offline package
+name: Download Rust and commit to repo
 on: workflow_dispatch
 
+permissions:
+  contents: write  # دسترسی نوشتن در ریپازیتوری
+
 jobs:
-  download:
+  download-and-commit:
     runs-on: ubuntu-latest
     steps:
-      - run: |
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Download Rust installer
+        run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
           chmod +x rustup-init.sh
-          ./rustup-init.sh -y --no-modify-path
-          source ~/.cargo/env
-          # بسته‌بندی کل دایرکتوری .cargo
-          tar -czf rust-offline.tar.gz ~/.cargo
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rust-offline
-          path: rust-offline.tar.gz
+          # نصب در دایرکتوری موقت
+          ./rustup-init.sh -y --prefix ./rust-local
+          
+      - name: Create archive
+        run: |
+          tar -czf rust-offline.tar.gz ./rust-local
+          
+      - name: Commit and push to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rust-offline.tar.gz rustup-init.sh
+          git commit -m "Add Rust offline package [skip ci]" || echo "No changes to commit"
+          git push
