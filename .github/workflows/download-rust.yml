@@ -1,26 +1,20 @@
-name: Download Rust binaries directly
-on: workflow_dispatch
-
-permissions:
-  contents: write
+name: Upload to Release
+on:
+  workflow_dispatch:
 
 jobs:
-  download:
+  upload-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Download Rust compiler binaries
-        run: |
-          # دانلود فایل باینری آماده (نه اسکریپت)
-          curl -L https://github.com/rust-lang/rust/releases/download/1.95.0/rust-1.95.0-x86_64-unknown-linux-gnu.tar.gz -o rust.tar.gz
-          curl -L https://github.com/rust-lang/rustup/releases/download/1.27.1/rustup-init-x86_64-unknown-linux-gnu.tar.gz -o rustup.tar.gz
-          
-      - name: Commit files
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add *.tar.gz
-          git commit -m "Add Rust 1.95.0 binaries" || echo "No changes"
-          git push
+      - name: Download file
+        run: curl -L -o rust-1.95.0.tar.xz https://static.rust-lang.org/dist/rust-1.95.0-x86_64-unknown-linux-gnu.tar.xz
+
+      - name: Create Release and Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: rust-1.95.0
+          name: "Rust 1.95.0 Tarball"
+          files: rust-1.95.0.tar.xz
+          token: ${{ secrets.GITHUB_TOKEN }}
