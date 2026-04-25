@@ -1,20 +1,27 @@
-name: Upload to Release
+name: Auto Download and Commit Large File
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # فقط خودتان اجرا کنید
 
 jobs:
-  upload-release:
+  download-and-force-commit:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download file
-        run: curl -L -o rust-1.95.0.tar.xz https://static.rust-lang.org/dist/rust-1.95.0-x86_64-unknown-linux-gnu.tar.xz
-
-      - name: Create Release and Upload
-        uses: softprops/action-gh-release@v1
+      - name: Checkout repo with history
+        uses: actions/checkout@v4
         with:
-          tag_name: rust-1.95.0
-          name: "Rust 1.95.0 Tarball"
-          files: rust-1.95.0.tar.xz
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Download tarball directly
+        run: |
+          curl -L -o rust-1.95.0.tar.xz https://static.rust-lang.org/dist/rust-1.95.0-x86_64-unknown-linux-gnu.tar.xz
+          ls -lh rust-1.95.0.tar.xz   # بررسی حجم واقعی
+
+      - name: Commit and force push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add rust-1.95.0.tar.xz -f
+          git commit -m "Add Rust 1.95.0 tarball (auto)" || echo "No change"
+          git push origin HEAD --force
