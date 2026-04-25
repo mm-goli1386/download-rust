@@ -1,33 +1,26 @@
-name: Download Rust and commit to repo
+name: Download Rust binaries directly
 on: workflow_dispatch
 
 permissions:
-  contents: write  # دسترسی نوشتن در ریپازیتوری
+  contents: write
 
 jobs:
-  download-and-commit:
+  download:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Download Rust installer
+        
+      - name: Download Rust compiler binaries
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
-          chmod +x rustup-init.sh
-          # نصب در دایرکتوری موقت
-          ./rustup-init.sh -y --prefix ./rust-local
+          # دانلود فایل باینری آماده (نه اسکریپت)
+          curl -L https://github.com/rust-lang/rust/releases/download/1.95.0/rust-1.95.0-x86_64-unknown-linux-gnu.tar.gz -o rust.tar.gz
+          curl -L https://github.com/rust-lang/rustup/releases/download/1.27.1/rustup-init-x86_64-unknown-linux-gnu.tar.gz -o rustup.tar.gz
           
-      - name: Create archive
-        run: |
-          tar -czf rust-offline.tar.gz ./rust-local
-          
-      - name: Commit and push to repository
+      - name: Commit files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add rust-offline.tar.gz rustup-init.sh
-          git commit -m "Add Rust offline package [skip ci]" || echo "No changes to commit"
+          git add *.tar.gz
+          git commit -m "Add Rust 1.95.0 binaries" || echo "No changes"
           git push
