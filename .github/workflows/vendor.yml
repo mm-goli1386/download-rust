@@ -17,25 +17,23 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       
-      - name: Create Cargo.toml with rustls
+      - name: Create Cargo.toml
         run: |
           mkdir -p matrix-client
           cd matrix-client
           cargo init --lib
-          cat > Cargo.toml << 'CARGO_EOF'
-[package]
-name = "matrix-client"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-matrix-sdk = { version = "0.9", default-features = false, features = ["rustls", "sso-login"] }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-anyhow = "1"
-thiserror = "1"
-url = "2"
-CARGO_EOF
+          echo '[package]' > Cargo.toml
+          echo 'name = "matrix-client"' >> Cargo.toml
+          echo 'version = "0.1.0"' >> Cargo.toml
+          echo 'edition = "2021"' >> Cargo.toml
+          echo '' >> Cargo.toml
+          echo '[dependencies]' >> Cargo.toml
+          echo 'matrix-sdk = { version = "0.9", default-features = false, features = ["rustls", "sso-login"] }' >> Cargo.toml
+          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
+          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
+          echo 'anyhow = "1"' >> Cargo.toml
+          echo 'thiserror = "1"' >> Cargo.toml
+          echo 'url = "2"' >> Cargo.toml
       
       - name: Vendor dependencies
         run: |
@@ -46,7 +44,7 @@ CARGO_EOF
       - name: Commit and push
         run: |
           git config user.name "GitHub Actions"
-          git config.user.email "actions@github.com"
+          git config user.email "actions@github.com"
           git add matrix-client/vendor.tar.gz
-          git diff --staged --quiet || git commit -m "Add vendor.tar.gz (rustls)"
+          git diff --staged --quiet || git commit -m "Add vendor.tar.gz"
           git push
