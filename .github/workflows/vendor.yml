@@ -19,10 +19,20 @@ jobs:
           mkdir -p matrix-client
           cd matrix-client
           cargo init --lib
-          echo 'matrix-sdk = "0.9"' >> Cargo.toml
-          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
-          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
-          echo 'anyhow = "1"' >> Cargo.toml
+          cat > Cargo.toml << 'EOF'
+[package]
+name = "matrix-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+matrix-sdk = { version = "0.9", features = ["native-tls"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"
+thiserror = "1"
+url = "2"
+EOF
           cargo vendor vendor
           tar -czf vendor.tar.gz vendor/
       
