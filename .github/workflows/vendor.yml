@@ -28,7 +28,7 @@ jobs:
           echo 'edition = "2021"' >> Cargo.toml
           echo '' >> Cargo.toml
           echo '[dependencies]' >> Cargo.toml
-          echo 'matrix-sdk = "0.10"' >> Cargo.toml
+          echo 'matrix-sdk = { version = "0.10", default-features = false, features = ["rustls-tls", "sso-login"] }' >> Cargo.toml
           echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
           echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
           echo 'anyhow = "1"' >> Cargo.toml
