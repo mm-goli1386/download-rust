@@ -1,27 +1,38 @@
-name: Auto Download and Commit Large File
+name: Build and Vendor Dependencies
+
 on:
-  workflow_dispatch:  # فقط خودتان اجرا کنید
+  workflow_dispatch:  # اجرای دستی
 
 jobs:
-  download-and-force-commit:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout repo with history
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
         with:
-          fetch-depth: 0
+          toolchain: stable
 
-      - name: Download tarball directly
+      - name: Create project
         run: |
-          curl -L -o rust-1.95.0.tar.xz https://static.rust-lang.org/dist/rust-1.95.0-x86_64-unknown-linux-gnu.tar.xz
-          ls -lh rust-1.95.0.tar.xz   # بررسی حجم واقعی
+          mkdir -p matrix-client
+          cd matrix-client
+          cargo init --lib
+          echo 'matrix-sdk = "0.9"' >> Cargo.toml
+          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
+          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
+          echo 'anyhow = "1"' >> Cargo.toml
 
-      - name: Commit and force push
+      - name: Vendor dependencies
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "actions@github.com"
-          git add rust-1.95.0.tar.xz -f
-          git commit -m "Add Rust 1.95.0 tarball (auto)" || echo "No change"
-          git push origin HEAD --force
+          cd matrix-client
+          cargo vendor vendor
+          tar -czf vendor.tar.gz vendor/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-deps
+          path: matrix-client/vendor.tar.gz
