@@ -3,6 +3,9 @@ name: Build and Vendor
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,25 +17,27 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       
-      - name: Create project and vendor
+      - name: Create Cargo.toml
         run: |
           mkdir -p matrix-client
           cd matrix-client
           cargo init --lib
-          cat > Cargo.toml << 'EOF'
-[package]
-name = "matrix-client"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-matrix-sdk = { version = "0.9", features = ["native-tls"] }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-anyhow = "1"
-thiserror = "1"
-url = "2"
-EOF
+          echo '[package]' > Cargo.toml
+          echo 'name = "matrix-client"' >> Cargo.toml
+          echo 'version = "0.1.0"' >> Cargo.toml
+          echo 'edition = "2021"' >> Cargo.toml
+          echo '' >> Cargo.toml
+          echo '[dependencies]' >> Cargo.toml
+          echo 'matrix-sdk = { version = "0.9", features = ["native-tls"] }' >> Cargo.toml
+          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
+          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
+          echo 'anyhow = "1"' >> Cargo.toml
+          echo 'thiserror = "1"' >> Cargo.toml
+          echo 'url = "2"' >> Cargo.toml
+      
+      - name: Vendor dependencies
+        run: |
+          cd matrix-client
           cargo vendor vendor
           tar -czf vendor.tar.gz vendor/
       
