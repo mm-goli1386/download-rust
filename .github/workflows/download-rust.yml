@@ -1,7 +1,7 @@
 name: Build and Vendor Dependencies
 
 on:
-  workflow_dispatch:  # اجرای دستی
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,24 +15,34 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Create project
+      - name: Create project and vendor
         run: |
           mkdir -p matrix-client
           cd matrix-client
           cargo init --lib
-          echo 'matrix-sdk = "0.9"' >> Cargo.toml
-          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
-          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
-          echo 'anyhow = "1"' >> Cargo.toml
+          cat > Cargo.toml << 'EOF'
+[package]
+name = "matrix-client"
+version = "0.1.0"
+edition = "2021"
 
-      - name: Vendor dependencies
-        run: |
-          cd matrix-client
+[dependencies]
+matrix-sdk = "0.9"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"
+thiserror = "1"
+url = "2"
+EOF
+          
           cargo vendor vendor
           tar -czf vendor.tar.gz vendor/
+          rm -rf vendor
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: matrix-deps
-          path: matrix-client/vendor.tar.gz
+      - name: Commit and push vendor file
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add matrix-client/vendor.tar.gz
+          git commit -m "Add vendored dependencies" || echo "No changes to commit"
+          git push
