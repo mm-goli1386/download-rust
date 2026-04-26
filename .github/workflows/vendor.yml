@@ -1,4 +1,4 @@
-name: Build and Vendor Dependencies
+name: Build and Vendor
 
 on:
   workflow_dispatch:
@@ -7,42 +7,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
       - name: Create project and vendor
         run: |
           mkdir -p matrix-client
           cd matrix-client
           cargo init --lib
-          cat > Cargo.toml << 'EOF'
-[package]
-name = "matrix-client"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-matrix-sdk = "0.9"
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-anyhow = "1"
-thiserror = "1"
-url = "2"
-EOF
-          
+          echo 'matrix-sdk = "0.9"' >> Cargo.toml
+          echo 'tokio = { version = "1", features = ["full"] }' >> Cargo.toml
+          echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
+          echo 'anyhow = "1"' >> Cargo.toml
           cargo vendor vendor
           tar -czf vendor.tar.gz vendor/
-          rm -rf vendor
-
-      - name: Commit and push vendor file
+      
+      - name: Commit and push
         run: |
-          git config user.name "github-actions"
-          git config.user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git add matrix-client/vendor.tar.gz
-          git commit -m "Add vendored dependencies" || echo "No changes to commit"
+          git diff --staged --quiet || git commit -m "Add vendor.tar.gz"
           git push
