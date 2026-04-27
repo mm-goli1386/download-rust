@@ -17,6 +17,21 @@ jobs:
       - name: Clone Robrix
         run: git clone https://github.com/project-robius/robrix.git
       
+      - name: Configure Cargo for rustls
+        working-directory: robrix
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml << 'EOF'
+[net]
+git-fetch-with-cli = true
+
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"
+EOF
+      
       - name: Vendor dependencies
         working-directory: robrix
         run: |
