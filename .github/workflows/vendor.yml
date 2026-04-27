@@ -7,21 +7,32 @@ jobs:
   vendor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Robrix
+        uses: actions/checkout@v4
         with:
           repository: project-robius/robrix
           path: robrix
+
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - name: Vendor everything
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev libsqlite3-dev libx11-dev libasound2-dev libpulse-dev libwayland-dev libxkbcommon-dev cmake
+
+      - name: Vendor dependencies
         working-directory: robrix
         run: cargo vendor vendor
-      - name: Compress vendor directory
+
+      - name: Create archive
         working-directory: robrix
         run: tar -czf vendor.tar.gz vendor
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: robrix-vendor
           path: robrix/vendor.tar.gz
