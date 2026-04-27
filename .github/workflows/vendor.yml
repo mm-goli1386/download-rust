@@ -1,4 +1,4 @@
-name: Vendor Robrix Dependencies
+name: Vendor Robrix
 
 on:
   workflow_dispatch:
@@ -8,38 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          repository: project-robius/robrix
+          path: robrix
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
-      - name: Clone Robrix
-        run: git clone https://github.com/project-robius/robrix.git
-      
-      - name: Configure Cargo for rustls
+      - name: Vendor everything
         working-directory: robrix
-        run: |
-          mkdir -p .cargo
-          cat > .cargo/config.toml << 'EOF'
-[net]
-git-fetch-with-cli = true
-
-[source.crates-io]
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "vendor"
-EOF
-      
-      - name: Vendor dependencies
+        run: cargo vendor vendor
+      - name: Compress vendor directory
         working-directory: robrix
-        run: |
-          cargo vendor vendor
-          tar -czf vendor.tar.gz vendor/
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        run: tar -czf vendor.tar.gz vendor
+      - uses: actions/upload-artifact@v4
         with:
           name: robrix-vendor
           path: robrix/vendor.tar.gz
